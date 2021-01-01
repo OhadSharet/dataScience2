@@ -4,9 +4,11 @@ from collections import Counter
 
 
 class Ex3():
-    BIT_SIZE = 255
+    BIT_SIZE = 252
     K = 10
     MAX_INT= 9223372036854775807
+    BIT_AVG_THRESHOLD = 1/7
+    MAX_REPS = 30
 
 
     def __init__(self):
@@ -17,7 +19,7 @@ class Ex3():
         (self.img_train, self.img_test) = (None, None)
         self.clusters =[[] for _ in range(self.K)]
         self.load_data()
-        self.clusters_rep = self._init_cluster_centers_manually()
+        self.clusters_rep = self._init_cluster_centers_randomly()
         self.cluster_labels = [-1] * 10
 
     def _init_cluster_centers_randomly(self):
@@ -78,11 +80,15 @@ class Ex3():
 
     def _train_model(self):
         counter = 1
-        while -1 in self.cluster_labels and counter < 20:
+        while -1 in self.cluster_labels and counter < self.MAX_REPS:
             self._devide_imgs_to_clusters(self.img_train)
             self.clusters_rep = [self._get_cluster_new_rep(i) for i in range(self.K)]
             print("modole was trained for %s times"%counter)
             counter+=1
+
+        for index in range(self.K):
+            if self.cluster_labels[index] == -1:
+                self._fix_cluster_label_to_most_common(index)
 
     def _get_cluster_new_rep(self,index):
         if self.cluster_labels[index]!=-1:
@@ -94,10 +100,10 @@ class Ex3():
             return rep
 
     def _get_cluster_avg_rep(self,index):
-        cluster_sum = np.zeros((28, 28))
+        cluster_sum = np.zeros((28, 28)).astype(int)
         for img in self.clusters[index]:
             cluster_sum += img.img
-        cluster_avg = cluster_sum/len(self.clusters[index])
+        cluster_avg = (cluster_sum/(len(self.clusters[index])*self.BIT_AVG_THRESHOLD)).astype(int)
         return cluster_avg
 
     def _fix_cluster_label_to_most_common(self,index):
@@ -127,7 +133,7 @@ class Ex3():
     def _update_clusters_rep(self):
         pass
 
-    def _similarity(self, img1, img2):
+    def _norm(self, img1, img2):
         '''
 
         :param img1:
@@ -142,18 +148,33 @@ class Ex3():
                 sum_similarity += abs(img1_pixel * img2_pixel)
         return sum_similarity
 
+    def _similarity(self, img1, img2):
+        '''
+
+        :param img1:
+        :param img2:
+        :return(int): a number thar represent how "close" img1 and img2 are
+        '''
+        sum = 0
+        for i in list(range(len(img1))):
+            for j in range(len(img1[i])):
+                img1_pixel = int((img1[i][j]))
+                img2_pixel = int((img2[i][j]))
+                sum += abs(img1_pixel * img2_pixel)
+        return sum
+
     def load_data(self):
         mnist_dataLoader = MnistDataloader(MnistDataloader.TRAINING_IMAGES_FILEPATH,
                                            MnistDataloader.TRAINING_LABELS_FILEPATH,
                                            MnistDataloader.TEST_IMAGES_FILEPATH, MnistDataloader.TEST_LABELS_FILEPATH)
         (img_train, label_train), (img_test, label_test) = mnist_dataLoader.load_data()
-        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))[:400]]
-        self.img_test = [Image(tup[0],tup[1]) for tup in list(zip(img_test, label_test))][:100]
+        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))]
+        self.img_test = [Image(tup[0],tup[1]) for tup in list(zip(img_test, label_test))]
 
 class Image():
     def __init__(self,img,label):
-        self.img = img
-        self.label=label
+        self.img = (np.array(img)/Ex3.BIT_SIZE).astype(int)
+        self.label = label
 
 if __name__ == "__main__":
     ex3 = Ex3()
