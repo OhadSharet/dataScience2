@@ -7,8 +7,8 @@ class Ex3():
     BIT_SIZE = 252
     K = 10
     MAX_INT= 9223372036854775807
-    BIT_AVG_THRESHOLD = 1/7
-    MAX_REPS = 30
+    BIT_AVG_THRESHOLD = 1/5
+    MAX_REPS = 4
 
 
     def __init__(self):
@@ -19,7 +19,7 @@ class Ex3():
         (self.img_train, self.img_test) = (None, None)
         self.clusters =[[] for _ in range(self.K)]
         self.load_data()
-        self.clusters_rep = self._init_cluster_centers_randomly()
+        self.clusters_rep = self._init_cluster_centers_manually()
         self.cluster_labels = [-1] * 10
 
     def _init_cluster_centers_randomly(self):
@@ -31,7 +31,7 @@ class Ex3():
     def _init_cluster_centers_manually(self):
         ls = [1,6,189,149,336,219,13,15,265,362]
         ls_slim = [156,124,190,245,338,145,274,307,114,153]
-        return [self.img_train[index].img for index in ls]
+        return [self.img_train[index].img for index in ls_slim]
 
     def _create_ranom_img(self):
         mat = [np.random.randint(2, size=28) for _ in range(28)]
@@ -71,7 +71,7 @@ class Ex3():
     def _devide_imgs_to_clusters(self, img_lst):
         num_of_img_devided = 0
         for img in img_lst:
-            index = self._get_closest_cluster_index(img)
+            index = self._get_closest_cluster_index_using_diff(img)
             self.clusters[index].append(img)
 
             num_of_img_devided+=1
@@ -130,23 +130,37 @@ class Ex3():
             i += 1
         return max_similarity_index
 
-    def _update_clusters_rep(self):
-        pass
+    def _get_closest_cluster_index_using_diff(self, img):
+        i = 0
+        min_diff_index = 0
+        min_diff = self.MAX_INT
+        for rep in self.clusters_rep:
+            curr_diff = self._diff(rep, img.img)
+            if curr_diff < min_diff:
+                min_diff_index = i
+                min_diff = curr_diff
+            i += 1
+        return min_diff_index
 
-    def _norm(self, img1, img2):
+    def _diff(self, img1, img2):
         '''
 
         :param img1:
         :param img2:
         :return(int): a number thar represent how "close" img1 and img2 are
         '''
-        sum_similarity = 0
+        sum_diff = 0
         for i in list(range(len(img1))):
             for j in range(len(img1[i])):
-                img1_pixel = int((img1[i][j]))
-                img2_pixel = int((img2[i][j])/self.BIT_SIZE)
-                sum_similarity += abs(img1_pixel * img2_pixel)
-        return sum_similarity
+                img1_pixel = self._get_pix_value(img1[i][j])
+                img2_pixel = self._get_pix_value(img2[i][j])
+                sum_diff += abs(img1_pixel - img2_pixel)
+        return sum_diff
+
+    def _get_pix_value(self,pix):
+        if pix<1:
+            return 0
+        return 1
 
     def _similarity(self, img1, img2):
         '''
@@ -168,7 +182,7 @@ class Ex3():
                                            MnistDataloader.TRAINING_LABELS_FILEPATH,
                                            MnistDataloader.TEST_IMAGES_FILEPATH, MnistDataloader.TEST_LABELS_FILEPATH)
         (img_train, label_train), (img_test, label_test) = mnist_dataLoader.load_data()
-        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))]
+        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))][:10000]
         self.img_test = [Image(tup[0],tup[1]) for tup in list(zip(img_test, label_test))]
 
 class Image():

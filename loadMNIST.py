@@ -100,7 +100,7 @@ def test_main():
     #
     images_2_show = []
     titles_2_show = []
-    for r in range(350,400):
+    for r in range(0,20):
         #r = random.randint(1, 60000)
         images_2_show.append(img_train[r])
         titles_2_show.append('training image [' + str(r) + '] = ' + str(lable_train[r]))
