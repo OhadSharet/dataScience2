@@ -6,7 +6,7 @@ from collections import Counter
 class Ex3():
     BIT_SIZE = 252
     K = 10
-    MAX_INT= 9223372036854775807
+    MAX_INT = 9223372036854775807
     BIT_AVG_THRESHOLD = 1/5
     MAX_REPS = 4
 
@@ -104,7 +104,16 @@ class Ex3():
         for img in self.clusters[index]:
             cluster_sum += img.img
         cluster_avg = (cluster_sum/(len(self.clusters[index])*self.BIT_AVG_THRESHOLD)).astype(int)
+        self._normelize_img(cluster_avg)
         return cluster_avg
+
+    def _normelize_img(self,img):
+        for i in range(len(img)):
+            for j in range(len(img[i])):
+                if img[i][j]>1:
+                    img[i][j]=1
+                else:
+                    img[i][j]=0
 
     def _fix_cluster_label_to_most_common(self,index):
         lst = [item.label for item in self.clusters[index]]
@@ -182,7 +191,7 @@ class Ex3():
                                            MnistDataloader.TRAINING_LABELS_FILEPATH,
                                            MnistDataloader.TEST_IMAGES_FILEPATH, MnistDataloader.TEST_LABELS_FILEPATH)
         (img_train, label_train), (img_test, label_test) = mnist_dataLoader.load_data()
-        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))][:10000]
+        self.img_train = [Image(tup[0],tup[1]) for tup in list(zip(img_train, label_train))]
         self.img_test = [Image(tup[0],tup[1]) for tup in list(zip(img_test, label_test))]
 
 class Image():
